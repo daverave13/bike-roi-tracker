@@ -30,13 +30,13 @@ router.get('/', (req, res) => {
   `);
   stmt.bind([limit, offset]);
   while (stmt.step()) {
-    rides.push(stmt.getAsObject() as Ride);
+    rides.push(stmt.getAsObject() as unknown as Ride);
   }
   stmt.free();
 
   const countStmt = db.prepare('SELECT COUNT(*) as count FROM rides');
   countStmt.step();
-  const total = (countStmt.getAsObject() as { count: number }).count;
+  const total = (countStmt.getAsObject() as unknown as { count: number }).count;
   countStmt.free();
 
   res.json({
@@ -57,7 +57,7 @@ router.get('/:id', (req, res) => {
   stmt.bind([parseInt(req.params.id)]);
 
   if (stmt.step()) {
-    const ride = stmt.getAsObject() as Ride;
+    const ride = stmt.getAsObject() as unknown as Ride;
     stmt.free();
     return res.json(ride);
   }
@@ -101,7 +101,7 @@ router.post('/', (req, res) => {
     // Get last inserted row
     const stmt = db.prepare('SELECT * FROM rides WHERE id = last_insert_rowid()');
     stmt.step();
-    const ride = stmt.getAsObject() as Ride;
+    const ride = stmt.getAsObject() as unknown as Ride;
     stmt.free();
 
     res.status(201).json(ride);
@@ -135,7 +135,7 @@ router.put('/:id', (req, res) => {
   const currentStmt = db.prepare('SELECT distance, gas_price FROM rides WHERE id = ?');
   currentStmt.bind([id]);
   currentStmt.step();
-  const current = currentStmt.getAsObject() as { distance: number; gas_price: number };
+  const current = currentStmt.getAsObject() as unknown as { distance: number; gas_price: number };
   currentStmt.free();
 
   const finalDistance = newDistance ?? current.distance;
@@ -159,7 +159,7 @@ router.put('/:id', (req, res) => {
   const stmt = db.prepare('SELECT * FROM rides WHERE id = ?');
   stmt.bind([id]);
   stmt.step();
-  const ride = stmt.getAsObject() as Ride;
+  const ride = stmt.getAsObject() as unknown as Ride;
   stmt.free();
 
   res.json(ride);

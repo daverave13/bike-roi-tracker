@@ -70,7 +70,7 @@ export function getSetting(key: string): string | null {
   const stmt = db.prepare('SELECT value FROM settings WHERE key = ?');
   stmt.bind([key]);
   if (stmt.step()) {
-    const row = stmt.getAsObject() as { value: string };
+    const row = stmt.getAsObject() as unknown as { value: string };
     stmt.free();
     return row.value;
   }
@@ -87,7 +87,7 @@ export function getAllSettings(): Record<string, string> {
   const results: Record<string, string> = {};
   const stmt = db.prepare('SELECT key, value FROM settings');
   while (stmt.step()) {
-    const row = stmt.getAsObject() as { key: string; value: string };
+    const row = stmt.getAsObject() as unknown as { key: string; value: string };
     results[row.key] = row.value;
   }
   stmt.free();

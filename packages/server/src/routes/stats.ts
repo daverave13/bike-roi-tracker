@@ -17,7 +17,7 @@ router.get('/', (req, res) => {
     FROM rides
   `);
   stmt.step();
-  const stats = stmt.getAsObject() as {
+  const stats = stmt.getAsObject() as unknown as {
     total_rides: number;
     total_savings: number;
     total_distance: number;
