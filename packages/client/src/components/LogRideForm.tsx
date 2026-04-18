@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useRides, useGasPrice, useSettings } from '../hooks/useApi';
+import { useState } from "react";
+import { useRides, useGasPrice, useSettings } from "../hooks/useApi";
 
 interface Props {
   onSuccess: () => void;
@@ -8,28 +8,33 @@ interface Props {
 function getLocalDateString() {
   const today = new Date();
   const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
 export function LogRideForm({ onSuccess }: Props) {
   const { createRide } = useRides();
-  const { price, loading: priceLoading, error: priceError, fetchPrice } = useGasPrice();
+  const {
+    price,
+    loading: priceLoading,
+    error: priceError,
+    fetchPrice,
+  } = useGasPrice();
   const { settings } = useSettings();
 
   const [date, setDate] = useState(getLocalDateString());
-  const [distance, setDistance] = useState('');
-  const [gasPrice, setGasPrice] = useState('');
-  const [weather, setWeather] = useState('');
-  const [notes, setNotes] = useState('');
+  const [distance, setDistance] = useState("");
+  const [gasPrice, setGasPrice] = useState("");
+  const [weather, setWeather] = useState("");
+  const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const handleFetchPrice = async () => {
-    const fetchedPrice = await fetchPrice();
-    if (fetchedPrice && typeof fetchedPrice === 'number') {
+    const fetchedPrice = await fetchPrice(date);
+    if (fetchedPrice && typeof fetchedPrice === "number") {
       setGasPrice(fetchedPrice.toFixed(2));
     }
   };
@@ -49,14 +54,14 @@ export function LogRideForm({ onSuccess }: Props) {
         notes: notes || undefined,
       });
       setSuccess(true);
-      setDistance('');
-      setGasPrice('');
-      setWeather('');
-      setNotes('');
+      setDistance("");
+      setGasPrice("");
+      setWeather("");
+      setNotes("");
       setDate(getLocalDateString());
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to log ride');
+      setError(err instanceof Error ? err.message : "Failed to log ride");
     } finally {
       setSubmitting(false);
     }
@@ -75,50 +80,60 @@ export function LogRideForm({ onSuccess }: Props) {
             type="date"
             id="date"
             value={date}
-            onChange={e => setDate(e.target.value)}
+            onChange={(e) => setDate(e.target.value)}
             required
           />
         </div>
 
         <div className="form-group">
           <label htmlFor="distance">
-            Distance (miles) - default: {settings?.default_distance || '26'}
+            Distance (miles) - default: {settings?.default_distance || "26"}
           </label>
           <input
             type="number"
             id="distance"
             value={distance}
-            onChange={e => setDistance(e.target.value)}
-            placeholder={settings?.default_distance || '26'}
+            onChange={(e) => setDistance(e.target.value)}
+            placeholder={settings?.default_distance || "26"}
             step="0.1"
           />
         </div>
 
         <div className="form-group">
           <label htmlFor="gasPrice">
-            Gas Price ($/gallon){' '}
+            Gas Price ($/gallon){" "}
             <button
               type="button"
               onClick={handleFetchPrice}
               disabled={priceLoading}
-              style={{ fontSize: '12px', padding: '2px 8px', marginLeft: '10px' }}
+              style={{
+                fontSize: "12px",
+                padding: "2px 8px",
+                marginLeft: "10px",
+              }}
             >
-              {priceLoading ? 'Fetching...' : 'Fetch Current'}
+              {priceLoading ? "Fetching..." : `Fetch Price (${date})`}
             </button>
           </label>
           <input
             type="number"
             id="gasPrice"
             value={gasPrice}
-            onChange={e => setGasPrice(e.target.value)}
+            onChange={(e) => setGasPrice(e.target.value)}
             placeholder="Enter price or fetch current"
             step="0.01"
             required
           />
-          {priceError && <small style={{ color: '#d32f2f' }}>{priceError}</small>}
-          {typeof price === 'number' && !gasPrice && (
+          {priceError && (
+            <small style={{ color: "#d32f2f" }}>{priceError}</small>
+          )}
+          {typeof price === "number" && !gasPrice && (
             <small
-              style={{ color: '#2e7d32', cursor: 'pointer', textDecoration: 'underline' }}
+              style={{
+                color: "#2e7d32",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
               onClick={() => setGasPrice(price.toFixed(2))}
             >
               Current price: ${price.toFixed(2)} - click to use
@@ -131,7 +146,7 @@ export function LogRideForm({ onSuccess }: Props) {
           <select
             id="weather"
             value={weather}
-            onChange={e => setWeather(e.target.value)}
+            onChange={(e) => setWeather(e.target.value)}
           >
             <option value="">Select...</option>
             <option value="Sunny">Sunny</option>
@@ -150,14 +165,14 @@ export function LogRideForm({ onSuccess }: Props) {
           <textarea
             id="notes"
             value={notes}
-            onChange={e => setNotes(e.target.value)}
+            onChange={(e) => setNotes(e.target.value)}
             rows={2}
             placeholder="How was the ride?"
           />
         </div>
 
         <button type="submit" className="btn btn-primary" disabled={submitting}>
-          {submitting ? 'Logging...' : 'Log Ride'}
+          {submitting ? "Logging..." : "Log Ride"}
         </button>
       </form>
     </div>

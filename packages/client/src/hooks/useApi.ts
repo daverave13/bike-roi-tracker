@@ -164,11 +164,12 @@ export function useGasPrice() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPrice = useCallback(async (): Promise<number | null> => {
+  const fetchPrice = useCallback(async (date?: string): Promise<number | null> => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`${API_BASE}/gas-price`);
+      const url = date ? `${API_BASE}/gas-price?date=${date}` : `${API_BASE}/gas-price`;
+      const res = await fetch(url);
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || 'Failed to fetch gas price');

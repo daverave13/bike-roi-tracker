@@ -1,6 +1,6 @@
 import { getSetting } from "../db.js";
 
-export async function getGasPrice(): Promise<number | null> {
+export async function getGasPrice(date?: string): Promise<number | null> {
   const apiKey = getSetting("eia_api_key");
 
   if (!apiKey) {
@@ -18,6 +18,11 @@ export async function getGasPrice(): Promise<number | null> {
     url.searchParams.set("sort[0][column]", "period");
     url.searchParams.set("sort[0][direction]", "desc");
     url.searchParams.set("length", "1");
+
+    // Filter by date if provided (gets the most recent price on or before that date)
+    if (date) {
+      url.searchParams.set("end", date);
+    }
 
     const response = await fetch(url.toString());
 

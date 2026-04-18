@@ -6,7 +6,8 @@ const router = Router();
 // GET /api/gas-price - Get current gas price from EIA
 router.get('/', async (req, res) => {
   try {
-    const price = await getGasPrice();
+    const date = req.query.date as string | undefined;
+    const price = await getGasPrice(date);
 
     if (price === null) {
       return res.status(503).json({
