@@ -7,6 +7,7 @@ export function Settings() {
   const [defaultDistance, setDefaultDistance] = useState('');
   const [mpg, setMpg] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [logPin, setLogPin] = useState('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -30,8 +31,12 @@ export function Settings() {
       if (apiKey) {
         updates.eia_api_key = apiKey;
       }
+      if (logPin) {
+        updates.log_pin = logPin;
+      }
       await updateSettings(updates);
       setApiKey('');
+      setLogPin('');
       setSuccess(true);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save settings');
@@ -44,6 +49,7 @@ export function Settings() {
   if (error) return <div className="card error">{error}</div>;
 
   const hasApiKey = settings?.eia_api_key && settings.eia_api_key.length > 0;
+  const hasPin = settings?.log_pin && settings.log_pin.length > 0;
 
   return (
     <div className="card">
@@ -91,6 +97,20 @@ export function Settings() {
               Get a free API key from EIA
             </a>
           </small>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="logPin">
+            Log Ride PIN {hasPin && <span style={{ color: '#2e7d32' }}>(set)</span>}
+          </label>
+          <input
+            type="password"
+            id="logPin"
+            value={logPin}
+            onChange={e => setLogPin(e.target.value)}
+            placeholder={hasPin ? 'Leave blank to keep current' : 'Set a PIN (optional)'}
+          />
+          <small>Protects the Log Ride page. Leave empty to disable protection.</small>
         </div>
 
         <button type="submit" className="btn btn-primary" disabled={saving}>

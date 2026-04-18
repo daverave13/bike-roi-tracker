@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useRides, useGasPrice, useSettings } from "../hooks/useApi";
+import { useState, useEffect } from "react";
+import { useRides, useGasPrice, useSettings, usePin } from "../hooks/useApi";
 
 interface Props {
   onSuccess: () => void;
@@ -22,6 +22,11 @@ export function LogRideForm({ onSuccess }: Props) {
     fetchPrice,
   } = useGasPrice();
   const { settings } = useSettings();
+  const { unlocked, verifyPin, checkRequired } = usePin();
+
+  const [pinRequired, setPinRequired] = useState<boolean | null>(null);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
 
   const [date, setDate] = useState(getLocalDateString());
   const [distance, setDistance] = useState("");
@@ -31,6 +36,19 @@ export function LogRideForm({ onSuccess }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    checkRequired().then((required) => setPinRequired(required));
+  }, [checkRequired]);
+
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinError(false);
+    const valid = await verifyPin(pinInput);
+    if (!valid) {
+      setPinError(true);
+    }
+  };
 
   const handleFetchPrice = async () => {
     const fetchedPrice = await fetchPrice(date);
@@ -66,6 +84,36 @@ export function LogRideForm({ onSuccess }: Props) {
       setSubmitting(false);
     }
   };
+
+  // Show PIN prompt if required and not unlocked
+  if (pinRequired === null) {
+    return <div className="card">Loading...</div>;
+  }
+
+  if (pinRequired && !unlocked) {
+    return (
+      <div className="card">
+        <h2>Enter PIN</h2>
+        {pinError && <div className="error">Incorrect PIN</div>}
+        <form onSubmit={handlePinSubmit}>
+          <div className="form-group">
+            <label htmlFor="pin">PIN</label>
+            <input
+              type="password"
+              id="pin"
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value)}
+              placeholder="Enter PIN to access"
+              autoFocus
+            />
+          </div>
+          <button type="submit" className="btn btn-primary">
+            Unlock
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="card">

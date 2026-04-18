@@ -44,6 +44,7 @@ export async function initDb(): Promise<Database> {
     ['default_distance', '26'],
     ['mpg', '19'],
     ['eia_api_key', ''],
+    ['log_pin', ''],
   ];
 
   for (const [key, value] of defaultSettings) {

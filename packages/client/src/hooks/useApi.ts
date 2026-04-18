@@ -25,6 +25,7 @@ export interface Settings {
   default_distance: string;
   mpg: string;
   eia_api_key: string;
+  log_pin: string;
 }
 
 export function useStats() {
@@ -187,4 +188,32 @@ export function useGasPrice() {
   }, []);
 
   return { price, loading, error, fetchPrice };
+}
+
+export function usePin() {
+  const [unlocked, setUnlocked] = useState(false);
+
+  const verifyPin = useCallback(async (pin: string): Promise<boolean> => {
+    const res = await fetch(`${API_BASE}/settings/verify-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+    });
+    const data = await res.json();
+    if (data.valid) setUnlocked(true);
+    return data.valid;
+  }, []);
+
+  const checkRequired = useCallback(async (): Promise<boolean> => {
+    const res = await fetch(`${API_BASE}/settings/verify-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: '' }),
+    });
+    const data = await res.json();
+    if (!data.required) setUnlocked(true);
+    return data.required;
+  }, []);
+
+  return { unlocked, verifyPin, checkRequired };
 }
