@@ -6,6 +6,7 @@ export function Settings() {
 
   const [defaultDistance, setDefaultDistance] = useState('');
   const [mpg, setMpg] = useState('');
+  const [apiKey, setApiKey] = useState('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -22,10 +23,15 @@ export function Settings() {
     setSuccess(false);
 
     try {
-      await updateSettings({
+      const updates: Record<string, string> = {
         default_distance: defaultDistance,
         mpg,
-      });
+      };
+      if (apiKey) {
+        updates.eia_api_key = apiKey;
+      }
+      await updateSettings(updates);
+      setApiKey('');
       setSuccess(true);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save settings');
@@ -36,6 +42,8 @@ export function Settings() {
 
   if (loading) return <div className="card">Loading settings...</div>;
   if (error) return <div className="card error">{error}</div>;
+
+  const hasApiKey = settings?.eia_api_key && settings.eia_api_key.length > 0;
 
   return (
     <div className="card">
@@ -65,6 +73,24 @@ export function Settings() {
             step="0.1"
             required
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="apiKey">
+            EIA API Key {hasApiKey && <span style={{ color: '#2e7d32' }}>(configured)</span>}
+          </label>
+          <input
+            type="password"
+            id="apiKey"
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            placeholder={hasApiKey ? 'Leave blank to keep current' : 'Enter your EIA API key'}
+          />
+          <small>
+            <a href="https://www.eia.gov/opendata/register.php" target="_blank" rel="noopener noreferrer">
+              Get a free API key from EIA
+            </a>
+          </small>
         </div>
 
         <button type="submit" className="btn btn-primary" disabled={saving}>

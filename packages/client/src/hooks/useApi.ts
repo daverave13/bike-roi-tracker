@@ -24,6 +24,7 @@ export interface Stats {
 export interface Settings {
   default_distance: string;
   mpg: string;
+  eia_api_key: string;
 }
 
 export function useStats() {

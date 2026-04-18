@@ -1,45 +1,44 @@
+import { getSetting } from "../db.js";
+
 export async function getGasPrice(): Promise<number | null> {
+  const apiKey = getSetting("eia_api_key");
+
+  if (!apiKey) {
+    console.log("EIA API key not configured");
+    return null;
+  }
+
   try {
-    // GasBuddy's map endpoint returns county-level gas prices
-    const response = await fetch(
-      "https://www.gasbuddy.com/gaspricemap/county?lat=37.7749&lng=-122.4194&usa=true",
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-          Accept: "application/json",
-        },
-      }
-    );
+    const url = new URL("https://api.eia.gov/v2/petroleum/pri/gnd/data/");
+    url.searchParams.set("api_key", apiKey);
+    url.searchParams.set("frequency", "weekly");
+    url.searchParams.set("data[0]", "value");
+    url.searchParams.set("facets[duoarea][]", "SCA"); // California
+    url.searchParams.set("facets[product][]", "EPMR"); // Regular gasoline
+    url.searchParams.set("sort[0][column]", "period");
+    url.searchParams.set("sort[0][direction]", "desc");
+    url.searchParams.set("length", "1");
+
+    const response = await fetch(url.toString());
 
     if (!response.ok) {
-      console.log("GasBuddy request failed:", response.status);
+      console.log("EIA API request failed:", response.status);
       return null;
     }
 
     const data = await response.json();
+    const rawPrice = data?.response?.data?.[0]?.value;
+    const price =
+      typeof rawPrice === "string" ? parseFloat(rawPrice) : rawPrice;
 
-    // GasBuddy returns county-level data, find California average
-    if (data && Array.isArray(data)) {
-      const caCounties = data.filter(
-        (d: { state?: string }) => d.state === "CA"
-      );
-      if (caCounties.length > 0) {
-        const avgPrice =
-          caCounties.reduce(
-            (sum: number, c: { regular?: number }) => sum + (c.regular || 0),
-            0
-          ) / caCounties.length;
-        if (avgPrice > 0) {
-          console.log(`GasBuddy CA average: $${avgPrice.toFixed(2)}`);
-          return Math.round(avgPrice * 100) / 100;
-        }
-      }
+    if (typeof price === "number" && !isNaN(price)) {
+      return price;
     }
 
+    console.log("No price data in EIA response");
     return null;
   } catch (error) {
-    console.log("GasBuddy fetch error:", error);
+    console.log("EIA API error:", error);
     return null;
   }
 }
@@ -47,7 +46,7 @@ export async function getGasPrice(): Promise<number | null> {
 export function calculateSavings(
   distance: number,
   mpg: number,
-  gasPrice: number
+  gasPrice: number,
 ): number {
   const gallonsUsed = distance / mpg;
   return Math.round(gallonsUsed * gasPrice * 100) / 100;
