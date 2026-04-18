@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useSettings } from '../hooks/useApi';
+import { useSettings, usePin } from '../hooks/useApi';
 
 export function Settings() {
   const { settings, loading, error, updateSettings } = useSettings();
+  const { unlocked, verifyPin, checkRequired } = usePin();
+
+  const [pinRequired, setPinRequired] = useState<boolean | null>(null);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState(false);
 
   const [defaultDistance, setDefaultDistance] = useState('');
   const [mpg, setMpg] = useState('');
@@ -12,11 +17,24 @@ export function Settings() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    checkRequired().then((required) => setPinRequired(required));
+  }, [checkRequired]);
+
+  useEffect(() => {
     if (settings) {
       setDefaultDistance(settings.default_distance);
       setMpg(settings.mpg);
     }
   }, [settings]);
+
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinError(false);
+    const valid = await verifyPin(pinInput);
+    if (!valid) {
+      setPinError(true);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +62,35 @@ export function Settings() {
       setSaving(false);
     }
   };
+
+  if (pinRequired === null) {
+    return <div className="card">Loading...</div>;
+  }
+
+  if (pinRequired && !unlocked) {
+    return (
+      <div className="card">
+        <h2>Enter PIN</h2>
+        {pinError && <div className="error">Incorrect PIN</div>}
+        <form onSubmit={handlePinSubmit}>
+          <div className="form-group">
+            <label htmlFor="settings-pin">PIN</label>
+            <input
+              type="password"
+              id="settings-pin"
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value)}
+              placeholder="Enter PIN to access"
+              autoFocus
+            />
+          </div>
+          <button type="submit" className="btn btn-primary">
+            Unlock
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   if (loading) return <div className="card">Loading settings...</div>;
   if (error) return <div className="card error">{error}</div>;
