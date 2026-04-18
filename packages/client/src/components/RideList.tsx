@@ -70,7 +70,7 @@ export function RideList({ onRefreshStats }: Props) {
             <p>No rides logged yet. Log your first bike commute!</p>
           </div>
         ) : (
-          <table>
+          <table className="ride-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -85,12 +85,12 @@ export function RideList({ onRefreshStats }: Props) {
             <tbody>
               {rides.map(ride => (
                 <tr key={ride.id}>
-                  <td>{new Date(ride.date + 'T00:00:00').toLocaleDateString()}</td>
-                  <td>{ride.distance} mi</td>
-                  <td>${ride.gas_price.toFixed(2)}</td>
-                  <td><strong>${ride.savings.toFixed(2)}</strong></td>
-                  <td>{ride.weather || '-'}</td>
-                  <td>{ride.notes || '-'}</td>
+                  <td data-label="Date">{new Date(ride.date + 'T00:00:00').toLocaleDateString()}</td>
+                  <td data-label="Distance">{ride.distance} mi</td>
+                  <td data-label="Gas Price">${ride.gas_price.toFixed(2)}</td>
+                  <td data-label="Saved"><strong>${ride.savings.toFixed(2)}</strong></td>
+                  <td data-label="Weather">{ride.weather || '-'}</td>
+                  <td data-label="Notes">{ride.notes || '-'}</td>
                   <td>
                     <button
                       className="edit-btn"

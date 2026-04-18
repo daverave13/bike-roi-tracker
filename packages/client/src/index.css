@@ -230,3 +230,50 @@ tr:hover {
   justify-content: flex-end;
   margin-top: 20px;
 }
+
+/* Mobile-friendly ride history */
+@media (max-width: 600px) {
+  .ride-table {
+    border: 0;
+  }
+
+  .ride-table thead {
+    display: none;
+  }
+
+  .ride-table tr {
+    display: block;
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-bottom: none;
+  }
+
+  .ride-table tr:hover {
+    background: #f0f0f0;
+  }
+
+  .ride-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .ride-table td:last-child {
+    border-bottom: none;
+    justify-content: flex-end;
+    padding-top: 10px;
+  }
+
+  .ride-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #666;
+  }
+
+  .ride-table td:last-child::before {
+    content: none;
+  }
+}
