@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useRides, Ride } from '../hooks/useApi';
+import { useRides, usePin, Ride } from '../hooks/useApi';
 
 interface Props {
   onRefreshStats: () => void;
@@ -7,6 +7,7 @@ interface Props {
 
 export function RideList({ onRefreshStats }: Props) {
   const { rides, loading, error, updateRide, deleteRide } = useRides();
+  const { unlocked, verifyPin, checkRequired } = usePin();
   const [editingRide, setEditingRide] = useState<Ride | null>(null);
   const [editForm, setEditForm] = useState({
     date: '',
@@ -16,8 +17,41 @@ export function RideList({ onRefreshStats }: Props) {
     notes: '',
   });
   const [saving, setSaving] = useState(false);
+  const [showPinPrompt, setShowPinPrompt] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ type: 'edit' | 'delete'; ride: Ride } | null>(null);
 
-  const handleEdit = (ride: Ride) => {
+  const requirePin = async (action: { type: 'edit' | 'delete'; ride: Ride }) => {
+    const required = await checkRequired();
+    if (required && !unlocked) {
+      setPendingAction(action);
+      setShowPinPrompt(true);
+      setPinInput('');
+      setPinError(false);
+      return false;
+    }
+    return true;
+  };
+
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinError(false);
+    const valid = await verifyPin(pinInput);
+    if (valid) {
+      setShowPinPrompt(false);
+      if (pendingAction?.type === 'edit') {
+        doEdit(pendingAction.ride);
+      } else if (pendingAction?.type === 'delete') {
+        doDelete(pendingAction.ride.id);
+      }
+      setPendingAction(null);
+    } else {
+      setPinError(true);
+    }
+  };
+
+  const doEdit = (ride: Ride) => {
     setEditingRide(ride);
     setEditForm({
       date: ride.date,
@@ -26,6 +60,12 @@ export function RideList({ onRefreshStats }: Props) {
       weather: ride.weather || '',
       notes: ride.notes || '',
     });
+  };
+
+  const handleEdit = async (ride: Ride) => {
+    if (await requirePin({ type: 'edit', ride })) {
+      doEdit(ride);
+    }
   };
 
   const handleSave = async () => {
@@ -48,13 +88,19 @@ export function RideList({ onRefreshStats }: Props) {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const doDelete = async (id: number) => {
     if (!confirm('Delete this ride?')) return;
     try {
       await deleteRide(id);
       onRefreshStats();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete');
+    }
+  };
+
+  const handleDelete = async (ride: Ride) => {
+    if (await requirePin({ type: 'delete', ride })) {
+      doDelete(ride.id);
     }
   };
 
@@ -101,7 +147,7 @@ export function RideList({ onRefreshStats }: Props) {
                     </button>
                     <button
                       className="delete-btn"
-                      onClick={() => handleDelete(ride.id)}
+                      onClick={() => handleDelete(ride)}
                       title="Delete ride"
                     >
                       ×
@@ -177,6 +223,35 @@ export function RideList({ onRefreshStats }: Props) {
                 {saving ? 'Saving...' : 'Save'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showPinPrompt && (
+        <div className="modal-overlay" onClick={() => setShowPinPrompt(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>Enter PIN</h3>
+            {pinError && <div className="error">Incorrect PIN</div>}
+            <form onSubmit={handlePinSubmit}>
+              <div className="form-group">
+                <label>PIN</label>
+                <input
+                  type="password"
+                  value={pinInput}
+                  onChange={e => setPinInput(e.target.value)}
+                  placeholder="Enter PIN"
+                  autoFocus
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn" onClick={() => setShowPinPrompt(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Unlock
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
