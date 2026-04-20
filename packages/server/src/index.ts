@@ -10,6 +10,8 @@ import ridesRouter from "./routes/rides.js";
 import statsRouter from "./routes/stats.js";
 import settingsRouter from "./routes/settings.js";
 import gasPriceRouter from "./routes/gas-price.js";
+import destinationsRouter from "./routes/destinations.js";
+import placesRouter from "./routes/places.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +25,8 @@ app.use("/api/rides", ridesRouter);
 app.use("/api/stats", statsRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/gas-price", gasPriceRouter);
+app.use("/api/destinations", destinationsRouter);
+app.use("/api/places", placesRouter);
 
 // Health check
 app.get("/api/health", (req, res) => {

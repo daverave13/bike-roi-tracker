@@ -39,12 +39,36 @@ export async function initDb(): Promise<Database> {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS destinations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      distance REAL NOT NULL,
+      biking_distance REAL
+    )
+  `);
+
+  // Migration: Add biking_distance to existing destinations table
+  try {
+    db.run('ALTER TABLE destinations ADD COLUMN biking_distance REAL');
+  } catch (e) {
+    // Column already exists, ignore
+  }
+
+  // Migration: Add driving_distance to rides table
+  try {
+    db.run('ALTER TABLE rides ADD COLUMN driving_distance REAL');
+  } catch (e) {
+    // Column already exists, ignore
+  }
+
   // Insert default settings if they don't exist
   const defaultSettings = [
     ['default_distance', '26'],
     ['mpg', '19'],
     ['eia_api_key', ''],
     ['log_pin', ''],
+    ['google_places_api_key', ''],
   ];
 
   for (const [key, value] of defaultSettings) {

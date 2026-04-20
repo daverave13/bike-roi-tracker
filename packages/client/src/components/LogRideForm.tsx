@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useRides, useGasPrice, useSettings, usePin } from "../hooks/useApi";
+import { useRides, useGasPrice, useSettings, usePin, useDestinations } from "../hooks/useApi";
 
 interface Props {
   onSuccess: () => void;
@@ -23,13 +23,16 @@ export function LogRideForm({ onSuccess }: Props) {
   } = useGasPrice();
   const { settings } = useSettings();
   const { unlocked, verifyPin, checkRequired } = usePin();
+  const { destinations } = useDestinations();
 
   const [pinRequired, setPinRequired] = useState<boolean | null>(null);
+  const [selectedDestination, setSelectedDestination] = useState("");
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
 
   const [date, setDate] = useState(getLocalDateString());
-  const [distance, setDistance] = useState("");
+  const [distance, setDistance] = useState("");  // biking distance
+  const [drivingDistance, setDrivingDistance] = useState<string>("");  // for savings calc
   const [gasPrice, setGasPrice] = useState("");
   const [weather, setWeather] = useState("");
   const [notes, setNotes] = useState("");
@@ -50,6 +53,21 @@ export function LogRideForm({ onSuccess }: Props) {
     }
   };
 
+  const handleDestinationChange = (destId: string) => {
+    setSelectedDestination(destId);
+    if (destId) {
+      const dest = destinations.find(d => d.id === parseInt(destId));
+      if (dest) {
+        // Use biking distance for miles ridden, driving distance for savings
+        setDistance(String(dest.biking_distance ?? dest.distance));
+        setDrivingDistance(String(dest.distance));
+      }
+    } else {
+      setDistance("");
+      setDrivingDistance("");
+    }
+  };
+
   const handleFetchPrice = async () => {
     const fetchedPrice = await fetchPrice(date);
     if (fetchedPrice && typeof fetchedPrice === "number") {
@@ -67,12 +85,15 @@ export function LogRideForm({ onSuccess }: Props) {
       await createRide({
         date,
         distance: distance ? parseFloat(distance) : undefined,
+        driving_distance: drivingDistance ? parseFloat(drivingDistance) : undefined,
         gas_price: gasPrice ? parseFloat(gasPrice) : undefined,
         weather: weather || undefined,
         notes: notes || undefined,
       });
       setSuccess(true);
+      setSelectedDestination("");
       setDistance("");
+      setDrivingDistance("");
       setGasPrice("");
       setWeather("");
       setNotes("");
@@ -133,15 +154,37 @@ export function LogRideForm({ onSuccess }: Props) {
           />
         </div>
 
+        {destinations.length > 0 && (
+          <div className="form-group">
+            <label htmlFor="destination">Destination</label>
+            <select
+              id="destination"
+              value={selectedDestination}
+              onChange={(e) => handleDestinationChange(e.target.value)}
+            >
+              <option value="">Custom distance...</option>
+              {destinations.map(dest => (
+                <option key={dest.id} value={dest.id}>
+                  {dest.title} ({dest.distance} mi)
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="form-group">
           <label htmlFor="distance">
-            Distance (miles) - default: {settings?.default_distance || "26"}
+            Distance (miles){!selectedDestination && ` - default: ${settings?.default_distance || "26"}`}
           </label>
           <input
             type="number"
             id="distance"
             value={distance}
-            onChange={(e) => setDistance(e.target.value)}
+            onChange={(e) => {
+              setDistance(e.target.value);
+              setSelectedDestination("");
+              setDrivingDistance("");  // Clear driving distance when manually editing
+            }}
             placeholder={settings?.default_distance || "26"}
             step="0.1"
           />

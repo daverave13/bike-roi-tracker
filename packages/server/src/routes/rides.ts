@@ -8,7 +8,8 @@ interface Ride {
   id: number;
   date: string;
   gas_price: number;
-  distance: number;
+  distance: number;  // biking distance (actual miles ridden)
+  driving_distance: number | null;  // for savings calculation
   savings: number;
   notes: string | null;
   weather: string | null;
@@ -70,7 +71,7 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   try {
     const db = getDb();
-    const { date, distance, notes, weather, gas_price } = req.body;
+    const { date, distance, driving_distance, notes, weather, gas_price } = req.body;
 
     if (!date) {
       return res.status(400).json({ error: 'Date is required' });
@@ -85,16 +86,18 @@ router.post('/', (req, res) => {
     const mpg = parseFloat(getSetting('mpg') || '19');
 
     const rideDistance = distance ? parseFloat(distance) : defaultDistance;
+    const drivingDist = driving_distance ? parseFloat(driving_distance) : null;
     const gasPrice = parseFloat(gas_price);
 
-    // Calculate savings
-    const savings = calculateSavings(rideDistance, mpg, gasPrice);
+    // Calculate savings using driving distance if provided, otherwise use ride distance
+    const savingsDistance = drivingDist ?? rideDistance;
+    const savings = calculateSavings(savingsDistance, mpg, gasPrice);
 
     // Insert ride
     db.run(`
-      INSERT INTO rides (date, gas_price, distance, savings, notes, weather)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [date, gasPrice, rideDistance, savings, notes || null, weather || null]);
+      INSERT INTO rides (date, gas_price, distance, driving_distance, savings, notes, weather)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [date, gasPrice, rideDistance, drivingDist, savings, notes || null, weather || null]);
 
     saveDb();
 

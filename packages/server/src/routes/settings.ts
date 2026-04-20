@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
 
 // PUT /api/settings - Update settings
 router.put('/', (req, res) => {
-  const allowedKeys = ['default_distance', 'mpg', 'eia_api_key', 'log_pin'];
+  const allowedKeys = ['default_distance', 'mpg', 'eia_api_key', 'log_pin', 'google_places_api_key'];
   const updates: Record<string, string> = {};
 
   for (const key of allowedKeys) {
