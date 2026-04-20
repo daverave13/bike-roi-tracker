@@ -21,7 +21,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 export function Dashboard() {
@@ -33,14 +33,16 @@ export function Dashboard() {
 
     // Sort rides by date ascending
     const sortedRides = [...rides].sort(
-      (a, b) => new Date(a.date + "T00:00:00").getTime() - new Date(b.date + "T00:00:00").getTime()
+      (a, b) =>
+        new Date(a.date + "T00:00:00").getTime() -
+        new Date(b.date + "T00:00:00").getTime(),
     );
 
     const labels = sortedRides.map((r) =>
       new Date(r.date + "T00:00:00").toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-      })
+      }),
     );
 
     // Gas prices over time
@@ -121,6 +123,10 @@ export function Dashboard() {
           <div className="stat-box">
             <div className="value">${stats.totalSavings.toFixed(2)}</div>
             <div className="label">Total Saved</div>
+          </div>
+          <div className="stat-box">
+            <div className="value">{stats.totalDrivingDistance.toFixed(0)}</div>
+            <div className="label">Miles Not On Car</div>
           </div>
           <div className="stat-box">
             <div className="value">{stats.totalRides}</div>
