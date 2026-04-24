@@ -123,7 +123,8 @@ export function RideList({ onRefreshStats }: Props) {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Distance</th>
+                <th>Bike</th>
+                <th>Car</th>
                 <th>Gas Price</th>
                 <th>Saved</th>
                 <th>Weather</th>
@@ -135,7 +136,8 @@ export function RideList({ onRefreshStats }: Props) {
               {rides.map(ride => (
                 <tr key={ride.id}>
                   <td data-label="Date">{new Date(ride.date + 'T00:00:00').toLocaleDateString()}</td>
-                  <td data-label="Distance">{ride.distance} mi</td>
+                  <td data-label="Bike">{ride.distance} mi</td>
+                  <td data-label="Car">{ride.driving_distance != null ? `${ride.driving_distance} mi` : '-'}</td>
                   <td data-label="Gas Price">${ride.gas_price.toFixed(2)}</td>
                   <td data-label="Saved"><strong>${ride.savings.toFixed(2)}</strong></td>
                   <td data-label="Weather">{ride.weather || '-'}</td>
