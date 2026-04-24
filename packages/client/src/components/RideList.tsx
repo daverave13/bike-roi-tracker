@@ -12,6 +12,7 @@ export function RideList({ onRefreshStats }: Props) {
   const [editForm, setEditForm] = useState({
     date: '',
     distance: '',
+    driving_distance: '',
     gas_price: '',
     weather: '',
     notes: '',
@@ -56,6 +57,7 @@ export function RideList({ onRefreshStats }: Props) {
     setEditForm({
       date: ride.date,
       distance: String(ride.distance),
+      driving_distance: ride.driving_distance != null ? String(ride.driving_distance) : '',
       gas_price: String(ride.gas_price),
       weather: ride.weather || '',
       notes: ride.notes || '',
@@ -75,6 +77,7 @@ export function RideList({ onRefreshStats }: Props) {
       await updateRide(editingRide.id, {
         date: editForm.date,
         distance: parseFloat(editForm.distance),
+        driving_distance: editForm.driving_distance ? parseFloat(editForm.driving_distance) : null,
         gas_price: parseFloat(editForm.gas_price),
         weather: editForm.weather || null,
         notes: editForm.notes || null,
@@ -173,12 +176,22 @@ export function RideList({ onRefreshStats }: Props) {
               />
             </div>
             <div className="form-group">
-              <label>Distance (miles)</label>
+              <label>Bike Distance (miles)</label>
               <input
                 type="number"
                 step="0.1"
                 value={editForm.distance}
                 onChange={e => setEditForm({ ...editForm, distance: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Car Distance (miles)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={editForm.driving_distance}
+                onChange={e => setEditForm({ ...editForm, driving_distance: e.target.value })}
+                placeholder="For savings calculation"
               />
             </div>
             <div className="form-group">
