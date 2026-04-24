@@ -118,7 +118,7 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   const db = getDb();
   const id = parseInt(req.params.id);
-  const { date, distance, gas_price, notes, weather } = req.body;
+  const { date, distance, driving_distance, gas_price, notes, weather } = req.body;
 
   // Check if ride exists
   const checkStmt = db.prepare('SELECT * FROM rides WHERE id = ?');
@@ -132,29 +132,34 @@ router.put('/:id', (req, res) => {
   // Recalculate savings if distance or gas_price changed
   const mpg = parseFloat(getSetting('mpg') || '19');
   const newDistance = distance ? parseFloat(distance) : undefined;
+  const newDrivingDistance = driving_distance !== undefined ? (driving_distance ? parseFloat(driving_distance) : null) : undefined;
   const newGasPrice = gas_price ? parseFloat(gas_price) : undefined;
 
   // Get current values for recalculation
-  const currentStmt = db.prepare('SELECT distance, gas_price FROM rides WHERE id = ?');
+  const currentStmt = db.prepare('SELECT distance, driving_distance, gas_price FROM rides WHERE id = ?');
   currentStmt.bind([id]);
   currentStmt.step();
-  const current = currentStmt.getAsObject() as unknown as { distance: number; gas_price: number };
+  const current = currentStmt.getAsObject() as unknown as { distance: number; driving_distance: number | null; gas_price: number };
   currentStmt.free();
 
   const finalDistance = newDistance ?? current.distance;
+  const finalDrivingDistance = newDrivingDistance !== undefined ? newDrivingDistance : current.driving_distance;
   const finalGasPrice = newGasPrice ?? current.gas_price;
-  const savings = calculateSavings(finalDistance, mpg, finalGasPrice);
+  // Use driving_distance for savings calculation if available, otherwise use bike distance
+  const savingsDistance = finalDrivingDistance ?? finalDistance;
+  const savings = calculateSavings(savingsDistance, mpg, finalGasPrice);
 
   db.run(`
     UPDATE rides
     SET date = COALESCE(?, date),
         distance = COALESCE(?, distance),
+        driving_distance = ?,
         gas_price = COALESCE(?, gas_price),
         savings = ?,
         notes = COALESCE(?, notes),
         weather = COALESCE(?, weather)
     WHERE id = ?
-  `, [date || null, newDistance || null, newGasPrice || null, savings, notes ?? null, weather ?? null, id]);
+  `, [date || null, newDistance || null, finalDrivingDistance, newGasPrice || null, savings, notes ?? null, weather ?? null, id]);
 
   saveDb();
 
